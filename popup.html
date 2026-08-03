@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Phishing Detector</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      font-family: 'Google Sans', 'Segoe UI', sans-serif;
+      background: #f8f9fa;
+      color: #202124;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 0.3px;
+    }
+
+    .header-text p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.75);
+      margin-top: 2px;
+    }
+
+    /* ── Status indicator ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: white;
+      border-bottom: 1px solid #e8eaed;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ccc;
+      flex-shrink: 0;
+    }
+
+    .status-dot.online  { background: #1e8e3e; animation: pulse 2s infinite; }
+    .status-dot.offline { background: #d93025; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    .status-text {
+      font-size: 12px;
+      color: #5f6368;
+    }
+
+    /* ── Categories legend ── */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #5f6368;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 14px 18px 8px;
+    }
+
+    .categories {
+      padding: 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .category-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: white;
+      border: 1px solid #e8eaed;
+    }
+
+    .cat-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      color: white;
+      font-family: monospace;
+      flex-shrink: 0;
+    }
+
+    .cat-info h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #202124;
+    }
+
+    .cat-info p {
+      font-size: 11px;
+      color: #5f6368;
+      margin-top: 1px;
+    }
+
+    /* ── Manual test area ── */
+    .test-section {
+      padding: 0 12px 14px;
+    }
+
+    .test-section textarea {
+      width: 100%;
+      height: 70px;
+      padding: 8px 10px;
+      border: 1px solid #dadce0;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: 'Google Sans', sans-serif;
+      resize: none;
+      outline: none;
+      color: #202124;
+      background: white;
+    }
+
+    .test-section textarea:focus {
+      border-color: #1a73e8;
+    }
+
+    .test-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 9px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Google Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .test-btn:hover    { background: #1557b0; }
+    .test-btn:disabled { background: #9aa0a6; cursor: not-allowed; }
+
+    /* ── Result box ── */
+    .result-box {
+      margin: 0 12px 12px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+      border: 1px solid;
+    }
+
+    .result-box.show { display: block; animation: phish-fadein 0.3s ease; }
+
+    @keyframes phish-fadein {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-category {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-confidence {
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 6px;
+    }
+
+    .result-scores {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #5f6368;
+    }
+
+    .score-bar-wrap {
+      width: 80px;
+      height: 4px;
+      background: #e8eaed;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .score-bar {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      padding: 10px 18px;
+      border-top: 1px solid #e8eaed;
+      font-size: 11px;
+      color: #9aa0a6;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">🛡</div>
+    <div class="header-text">
+      <h1>Phishing Email Detector</h1>
+      <p>AI-powered Gmail protection</p>
+    </div>
+  </div>
+
+  <!-- Backend status -->
+  <div class="status-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <span class="status-text" id="statusText">Checking backend...</span>
+  </div>
+
+  <!-- Categories legend -->
+  <div class="section-title">Detection Categories</div>
+  <div class="categories">
+    <div class="category-card">
+      <div class="cat-icon" style="background:#1e8e3e;">✔</div>
+      <div class="cat-info">
+        <h3>Legitimate</h3>
+        <p>Safe email, no threats detected</p>
+      </div>
+    </div>
+    <div class="category-card">
+      <div class="cat-icon" style="background:#f9ab00;">?</div>
+      <div class="cat-info">
+        <h3>Suspicious</h3>
+        <p>Uncertain — proceed with caution</p>
+      </div>
+    </div>
+    <div class="category-card">
+      <div class="cat-icon" style="background:#d93025;">!</div>
+      <div class="cat-info">
+        <h3>Human Phishing</h3>
+        <p>Manually crafted phishing attempt</p>
+      </div>
+    </div>
+    <div class="category-card">
+      <div class="cat-icon" style="background:#7b1fa2; font-size:9px;">AI</div>
+      <div class="cat-info">
+        <h3>AI Phishing</h3>
+        <p>LLM-generated phishing email</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual test -->
+  <div class="section-title">Manual Test</div>
+  <div class="test-section">
+    <textarea id="testInput" placeholder="Paste any email text here to test..."></textarea>
+    <button class="test-btn" id="testBtn">Analyze Text</button>
+  </div>
+
+  <!-- Result -->
+  <div class="result-box" id="resultBox">
+    <div class="result-category" id="resultCategory"></div>
+    <div class="result-confidence" id="resultConfidence"></div>
+    <div class="result-scores" id="resultScores"></div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">BERT model · 3-class classifier · localhost:8000</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
